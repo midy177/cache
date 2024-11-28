@@ -107,7 +107,7 @@ func TestCacheTimes(t *testing.T) {
 }
 
 func TestNewFrom(t *testing.T) {
-	m := map[string]Item[int]{
+	m := map[string]*Item[int]{
 		"a": {
 			Object:     1,
 			Expiration: 0,
@@ -117,7 +117,7 @@ func TestNewFrom(t *testing.T) {
 			Expiration: 0,
 		},
 	}
-	tc := NewFrom(DefaultExpiration, 0, m)
+	tc := NewFrom[int](DefaultExpiration, 0, m)
 	a, found := tc.Get("a")
 	if !found {
 		t.Fatal("Did not find a")
