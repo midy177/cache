@@ -104,13 +104,13 @@ func (sc *shardedCache[T]) DeleteExpired() {
 	}
 }
 
-// Returns the items in the cache. This may include items that have expired,
+// Items Returns the items in the cache. This may include items that have expired,
 // but have not yet been cleaned up. If this is significant, the Expiration
 // fields of the items should be checked. Note that explicit synchronization
 // is needed to use a cache and its corresponding Items() return values at
 // the same time, as the maps are shared.
-func (sc *shardedCache[T]) Items() []map[string]Item[T] {
-	res := make([]map[string]Item[T], len(sc.cs))
+func (sc *shardedCache[T]) Items() []map[string]*Item[T] {
+	res := make([]map[string]*Item[T], len(sc.cs))
 	for i, v := range sc.cs {
 		res[i] = v.Items()
 	}
@@ -154,11 +154,11 @@ func runShardedJanitor[T any](sc *shardedCache[T], ci time.Duration) {
 }
 
 func newShardedCache[T any](n int, de time.Duration) *shardedCache[T] {
-	max := big.NewInt(0).SetUint64(uint64(math.MaxUint32))
-	rnd, err := rand.Int(rand.Reader, max)
+	maxUint := big.NewInt(0).SetUint64(uint64(math.MaxUint32))
+	rnd, err := rand.Int(rand.Reader, maxUint)
 	var seed uint32
 	if err != nil {
-		os.Stderr.Write([]byte("WARNING: go-cache's newShardedCache failed to read from the system CSPRNG (/dev/urandom or equivalent.) Your system's security may be compromised. Continuing with an insecure seed.\n"))
+		_, _ = os.Stderr.Write([]byte("WARNING: go-cache's newShardedCache failed to read from the system CSPRNG (/dev/urandom or equivalent.) Your system's security may be compromised. Continuing with an insecure seed.\n"))
 		seed = insecurerand.Uint32()
 	} else {
 		seed = uint32(rnd.Uint64())
@@ -171,7 +171,7 @@ func newShardedCache[T any](n int, de time.Duration) *shardedCache[T] {
 	for i := 0; i < n; i++ {
 		c := &cache[T]{
 			defaultExpiration: de,
-			items:             map[string]Item[T]{},
+			items:             map[string]*Item[T]{},
 		}
 		sc.cs[i] = c
 	}
